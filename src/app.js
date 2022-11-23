@@ -15,14 +15,14 @@ app.set('models', sequelize.models)
 app.get('/contracts/:id', getProfile, async (req, res) =>{
     const { Contract } = req.app.get('models')
     const { id } = req.params;
-    //const { profile } = req;
-    //const userId = profile.dataValues.id;
+    const { profile } = req;
+    const userId = profile.dataValues.id;
     const contract = await Contract.findOne({where: {id}})
-    //const contractorId = contract.ContractorId;
-    //const clientId = contract.ClientId;
-    //const authorizedUsers = [clientId, contractorId];
+    const contractorId = contract.ContractorId;
+    const clientId = contract.ClientId;
+    const authorizedUsers = [clientId, contractorId];
     if(!contract) return res.status(401).end()
-    //if (!authorizedUsers.includes(userId)) return res.send(401, 'Not Authorized');
+    if (!authorizedUsers.includes(userId)) return res.send(401, 'Not Authorized');
     res.json(contract)
 })
 module.exports = app;
