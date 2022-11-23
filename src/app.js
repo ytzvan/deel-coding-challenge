@@ -43,4 +43,33 @@ app.get('/contracts', getProfile, async(req, res) => {
       });
     return res.json(contracts)
 });
+
+app.get('/jobs/unpaid', getProfile, async(req, res) => {
+    const { Contract, Job } = req.app.get('models')
+    const { profile } = req;
+    const userId = profile.dataValues.id;
+    const userType = profile.dataValues.type;
+    let query = { status: ['in_progress'] };
+    if (userType === 'contractor') {
+        query = { ...query, ContractorId: userId}
+    }
+    if (userType === 'client') {
+        query = { ...query, ClientId: userId }
+    }
+    const contracts = await Contract.findAll({
+        attributes: ['id'],
+        where: query
+      });
+    let contractArr = [];
+    contracts.map( c => {
+        contractArr.push(c.id);
+    })
+    const jobs = await Job.findAll({
+        where : { 
+            contractId : contractArr,
+            paid : null
+        }
+    });
+    return res.json(jobs)
+})
 module.exports = app;
