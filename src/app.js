@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const {sequelize} = require('./model')
+const { Op } = require("sequelize");
 const {getProfile} = require('./middleware/getProfile')
 const app = express();
 app.use(bodyParser.json());
@@ -160,5 +161,49 @@ app.post("/balances/deposit/:userId", getProfile, async (req, res) => {
     }
     return res.send({balance: client.balance, userId});
     
+});
+
+app.get('/admin/best-profession', getProfile, async (req, res) => {
+    const { Contract, Job, Profile } = req.app.get('models');
+    console.log(req.query)
+    const jobs = await Job.findAll({
+        where : 
+        {   paid: true, 
+            paymentDate: {
+                [Op.lt]: new Date(req.query.end),
+                [Op.gt]: new Date(req.query.start)
+            } 
+        },
+        attributes: ['ContractId', 'price', 'id'],
+        order: sequelize.col('ContractId'),
+    });
+    let completedJobs = [];
+    jobs.map(id => {
+        completedJobs.push(id.dataValues.ContractId);
+    })
+    console.log(completedJobs)
+    const contracts = await Contract.findAll( { where: { id: completedJobs}, attributes: ['id', 'ContractorId'] });
+    let jobsByContractId = [];
+    let amount = 0;
+    let collectedAmountByContract = {};
+    // calculate contract Total Price Per contractor
+    console.log(contract)
+    contracts.map(c => {
+        jobs.map(job => {
+            if (job.ContractId == c.id) {
+                amount = amount + parseInt(job.price);
+                collectedAmountByContract = {...collectedAmountByContract, [c.id]: amount};
+            } else {
+                amount = 0;
+            }
+        });
+    })
+    // const contractors = await 
+    let contractorsId = []
+    contracts.map(c => {
+        contractorsId.push(c.dataValues.ContractorId)
+    });
+    let contractorsTopSellers = await Profile.findAll({where : {id: contractorsId}});
+    res.json({jobs, contracts, collectedAmountByContract, contractorsId, contractorsTopSellers});
 });
 module.exports = app;

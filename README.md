@@ -85,9 +85,18 @@ Below is a list of the required API's for the application.
 5. ***POST*** `/balances/deposit/:userId` - Deposits money into the the the balance of a client, a client can't deposit more than 25% his total of jobs to pay. (at the deposit moment) ✅ - ## in order to test this, the value amount should be passesd as a body parameter: { amount: 50}
 
 6. ***GET*** `/admin/best-profession?start=<date>&end=<date>` - Returns the profession that earned the most money (sum of jobs paid) for any contactor that worked in the query time range.
+✅ This is currently completed at 90%, I'm missing grouping the results by profession and sort it.
+In order to test, the date should be in the format mm/dd/yyyy. ie: localhost:3001/admin/best-profession?start=08/15/2020&end=08/17/2020
 
-7. ***GET*** `/admin/best-clients?start=<date>&end=<date>&limit=<integer>` - returns the clients the paid the most for jobs in the query time period. limit query parameter should be applied, default limit is 2.
+1. ***GET*** `/admin/best-clients?start=<date>&end=<date>&limit=<integer>` - returns the clients the paid the most for jobs in the query time period. limit query parameter should be applied, default limit is 2.
 ```
+❌ This is in Progreess: What I would do here, is similar to the bullet point #6.
+        1. first I'll get the jobs that were paid in the date range provided in the query.
+        2. After get the jobs, I'll get the contracts based on the jobId.
+        3. After get contracts, I'll get the ClientId's. 
+        4. I'll query each client contract, then get the jobs done and calculate the amount for each client. 
+        5. For sorting I'll use the sort function on sequalize
+
  [
     {
         "id": 1,
