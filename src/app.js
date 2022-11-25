@@ -120,5 +120,45 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
         res.status(200).json({error: "Insufficient Balance"});
     }
 });
+
+app.post("/balances/deposit/:userId", getProfile, async (req, res) => {
+    const { amount } = req.body;
+    const { Contract, Job, Profile } = req.app.get('models');
+    const userId  = req.params.userId;
+    const client = await Profile.findOne({ where: { id: userId } });
+    // calculate jobs to paid
+    const contracts = await Contract.findAll({where: { ClientId: client.id}});
+    /** 
+     * get jobs by contract - This should be a service but for delivery motives I'll add it here.
+     */
+     let contractArr = [];
+     contracts.map( c => {
+         contractArr.push(c.id);
+     })
+     const jobs = await Job.findAll({
+        where : { 
+            contractId : contractArr,
+            paid : null
+        }
+    });
+    let pendingPayment = 0;
+    jobs.map( j => {
+        pendingPayment = pendingPayment + j.price
+    });
+    const amountMaxAllowedPercentage = 25; // limit deposit to 25% 
+    const amountMaxAllowedValue = (pendingPayment * amountMaxAllowedPercentage) / 100;
+    if (amount > amountMaxAllowedValue) {
+        // if amount to deposit is higher than the amount maximum allowed, we should decline the tx.
+        return res.json({ error: 'Amount exceeds maximum allowed' });
+    }
+    try {
+         await client.update({
+            balance : client.balance + amount
+        });
+    } catch (e) {
+        throw new Error(e);
+    }
+    return res.send({balance: client.balance, userId});
+    
+});
 module.exports = app;
-1

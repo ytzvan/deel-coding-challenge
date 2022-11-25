@@ -82,7 +82,7 @@ Below is a list of the required API's for the application.
  
 4. ***POST*** `/jobs/:job_id/pay` - Pay for a job, a client can only pay if his balance >= the amount to pay. The amount should be moved from the client's balance to the contractor balance. - For this task I'll allow any client pay for a contract, even if not belong to them. I can limit to clients that only are owners but this can be a feature where you can pay a contract that not belongs to you.  ✅
 
-5. ***POST*** `/balances/deposit/:userId` - Deposits money into the the the balance of a client, a client can't deposit more than 25% his total of jobs to pay. (at the deposit moment)
+5. ***POST*** `/balances/deposit/:userId` - Deposits money into the the the balance of a client, a client can't deposit more than 25% his total of jobs to pay. (at the deposit moment) ✅ - ## in order to test this, the value amount should be passesd as a body parameter: { amount: 50}
 
 6. ***GET*** `/admin/best-profession?start=<date>&end=<date>` - Returns the profession that earned the most money (sum of jobs paid) for any contactor that worked in the query time range.
 
