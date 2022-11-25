@@ -72,4 +72,53 @@ app.get('/jobs/unpaid', getProfile, async(req, res) => {
     });
     return res.json(jobs)
 })
+
+app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
+    const { Contract, Job, Profile } = req.app.get('models');
+    const jobId  = req.params.job_id;
+    const job = await Job.findOne({ where : {id: jobId}});
+
+    const client = req.profile;
+    // check balance
+    const contract = await Contract.findOne({ where : { id: job.ContractId}});
+    const { ContractorId } = contract;
+    const contractor = await Profile.findOne({where : {id: ContractorId}});
+
+    // We are getting the balance from the logged user.
+    let canPay = false;
+    let clientBalanceAfterPay = null;
+    let contractorBalance = null;
+    if (job.price < client.balance) {
+        canPay = true;
+        //Pay 
+        clientBalanceAfterPay = client.balance - job.price;
+        contractorBalance = contractor.balance + job.price;
+        // Atomic transaction start
+        try {
+            const result = await sequelize.transaction(async (t) => {
+              const updateTx = await contractor.update({
+                balance: contractorBalance
+              }, { transaction: t });
+          
+              await client.update({
+                balance: clientBalanceAfterPay,
+              }, { transaction: t });
+              return updateTx;
+          
+            });
+            // If the execution reaches this line, the transaction has been committed successfully
+            // `result` is whatever was returned from the transaction callback (the `updateTx`, in this case)
+          
+          } catch (error) {
+                throw new Error(error.message);
+            // If the execution reaches this line, an error occurred.
+            // The transaction has already been rolled back automatically by Sequelize!
+          }
+        // Atomic transaction ends
+        res.json({ jobId, clientBalance: clientBalanceAfterPay});
+    } else {
+        res.status(200).json({error: "Insufficient Balance"});
+    }
+});
 module.exports = app;
+1
